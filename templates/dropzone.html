@@ -50,14 +50,12 @@
         url: "https://endpoint.com/",  // will be overwritten dynamically
         method: "PUT",
         timeout: 3600000,
-        parallelUploads: 1,
+        parallelUploads: 2,
         maxFilesize: 1000,  // MB
         autoProcessQueue: false,
         addRemoveLinks: true,
         createImageThumbnails: false,
         previewTemplate: previewTemplate,
-        binaryBody: true,
-        defaultHeaders: false,
         accept: function (file, done) {
           const req = new XMLHttpRequest();
           req.onreadystatechange = () => {
@@ -76,7 +74,19 @@
           req.send(null);
         },
       });
-    
+
+     // see https://stackoverflow.com/questions/62602133/uploading-an-mp3-using-dropzone-js-to-google-cloud-storage-via-signedurl-is-corr
+      uploader.on('sending', function(file, xhr,/* formData*/) {
+          // for Google Cloud Storage we don't want to send formData
+          // as that information will be serialized into the file itself.
+          // Instead, we only want to send the file to the signedUrl
+            let _send = xhr.send;
+            xhr.send = function() {
+              _send.call(xhr, file);
+            }
+
+        });
+
       uploader.on("success", () => {
         uploader.options.autoProcessQueue = true;  // https://github.com/enyo/dropzone/issues/462
       });
